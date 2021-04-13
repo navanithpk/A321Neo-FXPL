@@ -36,6 +36,12 @@ FMGS_sys.fpln = {
 
 }
 
+FMGS_sys.apts = {
+    dep = {
+    
+    }
+}
+
 local function update_status()
     -- NOTE: As far as I know, INDEPENDENT MODE is activated only when databases of FMCUs is different
     --       This has no sense in our aircraft, so this mode doesn't exist.
@@ -62,6 +68,32 @@ local function update_status()
 
 end
 
+local curr_cifp = nil
+local status = 0
+local function test_cifp()
+    if AvionicsBay.is_initialized() and AvionicsBay.is_ready() then
+        if status == 0 then
+            if AvionicsBay.cifp.is_ready() then
+                AvionicsBay.cifp.load_apt("LIML")
+                status = 1
+                print("LOAD")
+            end
+        elseif status == 1 then
+            if not AvionicsBay.cifp.is_ready() then
+                 print("WAITING")
+            else
+                curr_cifp = AvionicsBay.cifp.get("LIML", false)
+                status = 2
+                 print("GET")
+            end
+        elseif status == 2 then
+            print("OK ") -- .. #curr_cifp.sids .. " " .. #curr_cifp.stars .. " " .. #curr_cifp.apprs)
+            status = 3
+        end
+    end
+end
+
 function update()
     update_status()
+    test_cifp()
 end
